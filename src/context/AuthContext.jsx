@@ -1,20 +1,14 @@
-import { useState, useEffect, createContext, useContext } from 'react';
+import { useState, createContext, useContext } from 'react';
 
 const AuthContext = createContext(null);
 
-const API_BASE = import.meta.env.VITE_API_URL || 'https://ai-voice-assistant-backend-1-0iwa.onrender.com/api';
+const API_BASE = import.meta.env.VITE_API_URL || 'https://ai-voice-assistant-backend-u7nv.onrender.com/api/v1';
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
+  const [user, setUser] = useState(() => {
     const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-    setLoading(false);
-  }, []);
+    return storedUser ? JSON.parse(storedUser) : null;
+  });
 
   const login = async (email, password) => {
     const response = await fetch(`${API_BASE}/auth/login`, {
@@ -79,12 +73,14 @@ export function AuthProvider({ children }) {
   };
 
   const refreshToken = async () => {
-    const refreshToken = localStorage.getItem('refreshToken');
+    const token = localStorage.getItem('refreshToken');
+
+    if (!token) throw new Error("No refresh token available");
 
     const response = await fetch(`${API_BASE}/auth/refresh`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refreshToken }),
+      body: JSON.stringify({ refreshToken: token }),
     });
 
     const data = await response.json();
@@ -101,7 +97,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, refreshToken, loading }}>
+    <AuthContext.Provider value={{ user, login, register, logout, refreshToken }}>
       {children}
     </AuthContext.Provider>
   );
